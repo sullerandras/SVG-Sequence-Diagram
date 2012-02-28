@@ -1,0 +1,239 @@
+<!doctype html>
+<html xmlns:ng="http://angularjs.org" ng:app="MyApp">
+<head>
+	<meta charset="utf-8">
+	<title>Sequence flow</title>
+	<script src="angular-0.10.6.js"></script>
+	<style>
+		html, body { height: 100%; }
+		* {padding: 0; margin: 0;}
+		table { width: 100%; height: 100%; }
+		td { width: 50%; height: 100%; }
+		textarea { width: 100%; height: 50%; }
+		svg { border: 1px solid black; width: 100%; height: 100%;}
+	</style>
+	<script>
+		var app = angular.module('MyApp', [])
+		AppController.$inject = ['$defer']
+		function AppController($defer){
+			var scope = this
+			scope.$defer = $defer
+			scope.height = 400
+			scope.width = 500
+			scope.margin = 10
+			scope.user_width = 100
+			scope.user_height = 50
+			scope.note_width = 100
+			scope.note_height = 30
+			scope.lines = [
+				// {x: scope.user_width / 2, y: scope.user_height,
+				// 		dx: 0, dy: scope.height - 2 * scope.user_height},
+				// {x: 200 + scope.user_width / 2, y: scope.user_height,
+				// 		dx: 0, dy: scope.height - 2 * scope.user_height},
+				// {x: 400 + scope.user_width / 2, y: scope.user_height,
+				// 		dx: 0, dy: scope.height - 2 * scope.user_height},
+			]
+			scope.users = [
+				// {x: 0, y: 0, name: 'Alice'},
+				// {x: 0, y: scope.height - scope.user_height, name: 'Alice'},
+				// {x: 200, y: 0, name: 'Bob'},
+				// {x: 200, y: scope.height - scope.user_height, name: 'Bob'},
+				// {x: 400, y: 0, name: 'Cecil'},
+				// {x: 400, y: scope.height - scope.user_height, name: 'Cecil'},
+			]
+			scope.arrows = [
+				// {x: scope.user_width / 2, y: 100, length: 200, direction: 1, text: 'Send request'},
+				// {x: 200 + scope.user_width / 2, y: 200, length: 200, direction: -1, text: 'Send response'},
+				// {x: scope.user_width / 2, y: 300, length: 400, direction: 1, text: 'Hi5'},
+			]
+			scope.notes = [
+				{x: 260, y: 100, text: 'Bob thinks about it'}
+			]
+			scope.definition = ' User->A: DoWork\n\
+    A->B: <<createRequest>>\n\
+    note right of B: what should I do?\n\
+    B->C: DoWork\n\
+    note over C: processing...\n\
+    C->B: WorkDone\n\
+    B->A: RequestCreated\n\
+    A->User: Done'
+			scope.$watch('definition', function(){
+				scope.draw()
+			})
+		}
+		AppController.prototype = {
+			log: function(data){
+				console && console.log && console.log(data)
+				return data
+			},
+			Math: Math,
+			rndseed: 123,
+			rnd: function(min, max) {
+			  if (max == undefined) {
+			    max = min
+			    min = 0
+			  }
+			  this.rndseed = ((this.rndseed * 134775813) + 1) % 4294967296
+			  return this.rndseed / 4294967296
+			},
+			draw: function(){
+				var scope = this
+				scope.height = scope.user_height + scope.margin
+				scope.width = -100
+				scope.users = []
+				scope.lines = []
+				scope.arrows = []
+				scope.notes = []
+				var lines = scope.definition.split('\n')
+				for (var i in lines) {
+					var line = lines[i].trim()
+					if (/^(.*)->(.*):(.*)$/.exec(line) != null) {
+						var from = RegExp.$1.trim()
+						var to = RegExp.$2.trim()
+						var text = RegExp.$3.trim()
+						// console.log(line+' => from: '+from+', to: '+to+', text: '+text)
+						var ufrom = scope.getUser(from)
+						var uto = scope.getUser(to)
+						scope.arrows.push({
+							x: ufrom.x + scope.user_width / 2,
+							y: scope.height + scope.user_height / 2,
+							length: Math.abs(ufrom.x - uto.x),
+							direction: uto.x > ufrom.x ? 1 : -1,
+							text: text
+						})
+						scope.height += 50
+					} else if (/^note right of (.*):(.*)$/.exec(line) != null) {
+						var who = RegExp.$1.trim()
+						var text = RegExp.$2.trim()
+						var user = scope.getUser(who)
+						scope.notes.push({
+							x: user.x + scope.user_width / 2 + scope.margin,
+							y: scope.height,
+							text: text
+						})
+						scope.height += scope.note_height
+					} else if (/^note over (.*):(.*)$/.exec(line) != null) {
+						var who = RegExp.$1.trim()
+						var text = RegExp.$2.trim()
+						var user = scope.getUser(who)
+						scope.notes.push({
+							x: user.x + scope.user_width / 2 - scope.note_width / 2,
+							y: scope.height,
+							text: text
+						})
+						scope.height += scope.note_height
+					}
+				}
+				//add height for margin and bottom user boxes
+				scope.height += scope.margin + scope.user_height
+				for (var i in scope.users) {
+					var user = scope.users[i]
+					scope.users.push({
+						x: user.x,
+						y: scope.height - scope.user_height,
+						name: user.name
+					})
+				}
+				//add vertical lines
+				for (var i in scope.users) {
+					var user = scope.users[i]
+					scope.lines.push({
+						x: user.x + scope.user_width / 2, y: scope.user_height,
+				 		dx: 0, dy: scope.height - 2 * scope.user_height
+					})
+				}
+				// console.log(scope.users, scope.lines, scope.arrows)
+			},
+			getUser: function(name){
+				var scope = this
+				for (var i = 0; i < scope.users.length; i++) {
+					var user = scope.users[i]
+					if (user.name == name) {
+						return user
+					}
+				}
+				scope.width += 200
+				var user = {
+					x: scope.width - scope.user_width,
+					y: 0,
+					name: name
+				}
+				scope.users.push(user)
+				return user
+			},
+			byHand: function(x1, y1, x2, y2) {
+				this.rndseed = 123
+				var seg = Math.ceil(Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))/10)
+				var inaccuracy = 2
+				var points = ''
+				var x = x1
+				var y = y1
+				var dx = (x2 - x1) / seg
+				var dy = (y2 - y1) / seg
+				for (var i = 0; i <= seg; i++) {
+					points += (x+this.rnd() * inaccuracy)+','+(y+this.rnd() * inaccuracy)+' '
+					x += dx
+					y += dy
+				}
+				return points
+			},
+			rectByHand: function(x1, y1, x2, y2) {
+				return [
+					this.byHand(x1,y1, x2,y1),
+					this.byHand(x2,y1, x2,y2),
+					this.byHand(x2,y2, x1, y2),
+					this.byHand(x1,y2, x1, y1)
+					].join(" ")
+			}
+		}
+	</script>
+</head>
+<body ng:controller="AppController">
+	<table class="page">
+		<tr>
+			<td>
+				Enter your definition:<br/>
+				<textarea ng:model="definition"></textarea>
+				<button type="button" ng:click="draw()">Draw</button>
+			</td>
+			<td>
+				<svg version="1.1" viewBox="{{-margin}} {{-margin}} {{width+2*margin}} {{height+2*margin}}">
+					<desc>Hand drawn sequence diagram</desc>
+					<g stroke="black" font-family="Arial" text-anchor="middle">
+						<!-- draw user boxes and the vertical lines -->
+						<g ng:repeat="user in users" transform="translate({{user.x}}, {{user.y}})"
+							font-size="20">
+							<!-- <rect x="0" y="0" width="100" height="50" fill="#D8D8D8" stroke-width="2" /> -->
+							<polyline points="{{rectByHand(0,0,100,50)}}" fill="#D8D8D8" stroke-width="2" />
+							<text ng:bind="user.name" x="50" y="25" stroke-width="0"
+								dominant-baseline="middle"></text>
+						</g>
+						<g ng:repeat="line in lines" transform="translate({{line.x}}, {{line.y}})"
+							stroke-width="2">
+							<polyline points="{{byHand(0,0,line.dx,line.dy)}}"/>
+						</g>
+						<!-- draw arrows between users -->
+						<g ng:repeat="arrow in arrows" stroke-width="2"
+							transform="translate({{arrow.x}}, {{arrow.y}})">
+							<rect x="{{Math.min(3, arrow.length*arrow.direction+3)}}" y="-16" width="{{Math.abs((arrow.length-6)*arrow.direction)}}" height="19"
+								fill="white" stroke-width="0"/>
+							<polyline points="{{byHand(0,0,arrow.length*arrow.direction,0)}}"/>
+							<line x1="{{(arrow.length-11)*arrow.direction}}" y1="{{-10*arrow.direction}}" x2="{{(arrow.length-1)*arrow.direction}}" y2="0"/>
+							<line x1="{{(arrow.length-11)*arrow.direction}}" y1="{{10*arrow.direction}}" x2="{{(arrow.length-1)*arrow.direction}}" y2="0"/>
+							<text ng:bind="arrow.text" x="{{arrow.length*arrow.direction/2}}" y="-8"
+								stroke-width="0" dominant-baseline="middle" font-size="14"></text>
+						</g>
+						<!-- draw note boxes -->
+						<g ng:repeat="note in notes" stroke-width="1"
+							transform="translate({{note.x}}, {{note.y}})">
+							<rect x="0" y="0" width="{{note_width}}" height="{{note_height}}" fill="white"/>
+							<text ng:bind="note.text" x="{{note_width/2}}" y="{{note_height/2}}"
+								stroke-width="0" dominant-baseline="middle" font-size="10"></text>
+						</g>
+					</g>
+				</svg>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>
