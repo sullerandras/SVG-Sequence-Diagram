@@ -207,9 +207,6 @@ A->User: Done'
 				}
 				var ps = '%!PS\n\
 /PageSize '+pageSize+'\n\
-/Times-Roman findfont\n\
-15 scalefont\n\
-setfont\n\
 '+(rotate ? page.width+' 0 translate 90 rotate' : '')+'\n\
 '+scope.margin+' '+scope.margin+' translate\n\
 '+scale+' '+scale+' scale\n\
@@ -218,6 +215,9 @@ setfont\n\
   2 setlinewidth\n\
   1 setlinejoin\n\
   1 setlinecap\n\
+  /Times-Roman findfont\n\
+  15 scalefont\n\
+  setfont\n\
   newpath\n\
   % text x y direction length\n\
   2 copy\n\
@@ -259,13 +259,16 @@ setfont\n\
 } def\n\
 /USER {\n\
   2 setlinewidth\n\
+  /Times-Roman findfont\n\
+  15 scalefont\n\
+  setfont\n\
   % draw the gray background\n\
   newpath\n\
   2 copy\n\
   moveto\n\
-  100 0 rlineto\n\
-  0 -50 rlineto\n\
-  -100 0 rlineto\n\
+  '+scope.user_width+' 0 rlineto\n\
+  0 '+scope.user_height+' neg rlineto\n\
+  '+scope.user_width+' neg 0 rlineto\n\
   closepath\n\
   0.84375 setgray\n\
   fill\n\
@@ -273,16 +276,16 @@ setfont\n\
   newpath\n\
   2 copy\n\
   moveto\n\
-  100 0 rlineto\n\
-  0 -50 rlineto\n\
-  -100 0 rlineto\n\
+  '+scope.user_width+' 0 rlineto\n\
+  0 '+scope.user_height+' neg rlineto\n\
+  '+scope.user_width+' neg 0 rlineto\n\
   closepath\n\
   0 setgray\n\
   stroke\n\
   % draw the text in the center of the box\n\
   newpath\n\
   moveto\n\
-  50 -25 rmoveto % center of the box\n\
+  '+scope.user_width+' 2 div '+scope.user_height+' neg 2 div rmoveto % center of the box\n\
   0 -5 rmoveto % lower the text a little bit, so it will be in the center of the box visually\n\
   0 setgray\n\
   dup stringwidth pop 2 div neg 0 rmoveto\n\
@@ -307,9 +310,9 @@ setfont\n\
   newpath\n\
   2 copy\n\
   moveto\n\
-  100 0 rlineto\n\
-  0 -30 rlineto\n\
-  -100 0 rlineto\n\
+  '+scope.note_width+' 0 rlineto\n\
+  0 '+scope.note_height+' neg rlineto\n\
+  '+scope.note_width+' neg 0 rlineto\n\
   closepath\n\
   1 setgray\n\
   fill\n\
@@ -317,16 +320,16 @@ setfont\n\
   newpath\n\
   2 copy\n\
   moveto\n\
-  100 0 rlineto\n\
-  0 -30 rlineto\n\
-  -100 0 rlineto\n\
+  '+scope.note_width+' 0 rlineto\n\
+  0 '+scope.note_height+' neg rlineto\n\
+  '+scope.note_width+' neg 0 rlineto\n\
   closepath\n\
   0 setgray\n\
   stroke\n\
   % draw the text in the center of the box\n\
   newpath\n\
   moveto\n\
-  50 -15 rmoveto % center of the box\n\
+  '+scope.note_width+' 2 div '+scope.note_height+' neg 2 div rmoveto % center of the box\n\
   0 -3 rmoveto % lower the text a little bit, so it will be in the center of the box visually\n\
   0 setgray\n\
   dup stringwidth pop 2 div neg 0 rmoveto\n\
