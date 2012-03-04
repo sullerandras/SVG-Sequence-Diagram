@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<title>Sequence flow</title>
-	<script src="angular-0.10.6.js"></script>
+	<script src="http://docs-next.angularjs.org/angular-0.10.6.min.js"></script>
 	<style>
 		html, body { height: 100%; }
 		* {padding: 0; margin: 0;}
@@ -11,14 +11,15 @@
 		td { width: 50%; height: 100%; }
 		td.definition { vertical-align: top;}
 		textarea { width: 100%; height: 50%; }
-		svg { border: 1px solid black; width: 100%; height: 100%;}
+		svg { width: 100%; height: 100%; border: 1px solid black; }
 	</style>
 	<script>
 		var app = angular.module('MyApp', [])
-		AppController.$inject = ['$defer']
-		function AppController($defer){
+		AppController.$inject = ['$http', '$location', '$window']
+		function AppController($http, $location, $window){
 			var scope = this
-			scope.$defer = $defer
+			scope.$http = $http
+			scope.$window = $window
 			scope.margin = 10
 			scope.user_width = 100
 			scope.user_height = 50
@@ -57,6 +58,12 @@ A->User: Done'
 			rnd: function() {
 			  this.rndseed = ((this.rndseed * 134775813) + 1) % 4294967296
 			  return this.rndseed / 4294967296
+			},
+			download: function(text) {
+				var scope = this
+				scope.$window.location.href =
+					'data:application/x-download;charset=utf-8,' +
+					encodeURIComponent(text)
 			},
 			draw: function(){
 				var scope = this
@@ -176,7 +183,180 @@ A->User: Done'
 					this.byHand(x2,y2, x1, y2),
 					this.byHand(x1,y2, x1, y1)
 					].join(" ")
-			}
+			},
+			print: function(){
+				var scope = this
+				var pageSizes = {
+					A0: {width: 2384, height: 3370},
+					A1: {width: 1684, height: 2384},
+					A2: {width: 1191, height: 1684},
+					A3:{width:  842, height: 1191},
+					A4:{width:  595, height: 842},
+				}
+				var pageSize = 'A4'
+				var page = pageSizes[pageSize]
+				var sw = page.width / (scope.width + 2 * scope.margin)
+				var sh = page.height / (scope.height + 2 * scope.margin)
+				var rotate = false
+				var scale = Math.min(sw, sh)
+				if (sw < sh) {
+					rotate = true
+					sw = page.height / (scope.width + 2 * scope.margin)
+					sh = page.width / (scope.height + 2 * scope.margin)
+					scale = Math.min(sw, sh)
+				}
+				var ps = '%!PS\n\
+/PageSize '+pageSize+'\n\
+/Times-Roman findfont\n\
+15 scalefont\n\
+setfont\n\
+'+(rotate ? page.width+' 0 translate 90 rotate' : '')+'\n\
+'+scope.margin+' '+scope.margin+' translate\n\
+'+scale+' '+scale+' scale\n\
+/L { moveto rlineto } def\n\
+/ARROW { % text x y direction length\n\
+  2 setlinewidth\n\
+  1 setlinejoin\n\
+  1 setlinecap\n\
+  newpath\n\
+  % text x y direction length\n\
+  2 copy\n\
+  % text x y direction length direction length\n\
+  mul 0\n\
+  % text x y direction length rlen 0\n\
+  5 index 5 index L\n\
+  % text x y direction length\n\
+  1 index\n\
+  dup -10 mul -10 rmoveto\n\
+  dup 10 mul 10 rlineto\n\
+  -10 mul 10 rlineto\n\
+  stroke\n\
+  % text x y direction length\n\
+  % fill the background of the text with white\n\
+  3 index 3 index moveto %move to x,y\n\
+  % text x y direction length\n\
+  2 copy\n\
+  % text x y direction length direction length\n\
+  mul 2 div 2 rmoveto %move to the center of the arrow\n\
+  % text x y direction length\n\
+  4 index stringwidth pop 2 div neg 0 rmoveto %move to the left side of the text\n\
+  4 index stringwidth pop 0 rlineto\n\
+  0 17 rlineto\n\
+  4 index stringwidth pop neg 0 rlineto\n\
+  closepath\n\
+  1 setgray\n\
+  fill\n\
+  stroke\n\
+  % text x y direction length\n\
+  % draw the text\n\
+  0 setgray\n\
+  3 index 3 index moveto\n\
+  mul 2 div 6 rmoveto\n\
+  pop pop\n\
+  dup stringwidth pop 2 div neg 0 rmoveto\n\
+  show\n\
+  stroke\n\
+} def\n\
+/USER {\n\
+  2 setlinewidth\n\
+  % draw the gray background\n\
+  newpath\n\
+  2 copy\n\
+  moveto\n\
+  100 0 rlineto\n\
+  0 -50 rlineto\n\
+  -100 0 rlineto\n\
+  closepath\n\
+  0.84375 setgray\n\
+  fill\n\
+  % draw the border of the box\n\
+  newpath\n\
+  2 copy\n\
+  moveto\n\
+  100 0 rlineto\n\
+  0 -50 rlineto\n\
+  -100 0 rlineto\n\
+  closepath\n\
+  0 setgray\n\
+  stroke\n\
+  % draw the text in the center of the box\n\
+  newpath\n\
+  moveto\n\
+  50 -25 rmoveto % center of the box\n\
+  0 -5 rmoveto % lower the text a little bit, so it will be in the center of the box visually\n\
+  0 setgray\n\
+  dup stringwidth pop 2 div neg 0 rmoveto\n\
+  show\n\
+  stroke\n\
+} def\n\
+/LINE {\n\
+  2 setlinewidth\n\
+  1 setlinejoin\n\
+  1 setlinecap\n\
+  newpath\n\
+  4 2 roll\n\
+  L\n\
+  stroke\n\
+} def\n\
+/NOTE {\n\
+  /Times-Roman findfont\n\
+  10 scalefont\n\
+  setfont\n\
+  1 setlinewidth\n\
+  % draw the white background\n\
+  newpath\n\
+  2 copy\n\
+  moveto\n\
+  100 0 rlineto\n\
+  0 -30 rlineto\n\
+  -100 0 rlineto\n\
+  closepath\n\
+  1 setgray\n\
+  fill\n\
+  % draw the border of the box\n\
+  newpath\n\
+  2 copy\n\
+  moveto\n\
+  100 0 rlineto\n\
+  0 -30 rlineto\n\
+  -100 0 rlineto\n\
+  closepath\n\
+  0 setgray\n\
+  stroke\n\
+  % draw the text in the center of the box\n\
+  newpath\n\
+  moveto\n\
+  50 -15 rmoveto % center of the box\n\
+  0 -3 rmoveto % lower the text a little bit, so it will be in the center of the box visually\n\
+  0 setgray\n\
+  dup stringwidth pop 2 div neg 0 rmoveto\n\
+  show\n\
+  stroke\n\
+} def\n\
+'
+				for (var i in scope.users) {
+					var user = scope.users[i]
+					ps += '('+user.name+') '+user.x+' '+(scope.height-user.y)+' USER\n'
+				}
+				for (var i in scope.lines) {
+					var line = scope.lines[i]
+					ps += line.x+' '+(scope.height-line.y)+' '+line.dx+' '+(-line.dy)+' LINE\n'
+				}
+				for (var i in scope.arrows) {
+					var arrow = scope.arrows[i]
+					var l = arrow.length
+					var d = arrow.direction
+					// ps += '% arrow '+arrow.x+', '+arrow.y+', length: '+l+', direction: '+d+'\n'
+					ps += '('+arrow.text+') '+arrow.x+' '+arrow.y+' '+d+' '+l+' ARROW\n'
+				}
+				for (var i in scope.notes) {
+					var note = scope.notes[i]
+					ps += '('+note.text+') '+note.x+' '+(scope.height-note.y)+' NOTE\n'
+				}
+				ps += 'showpage\n'
+				console.log(ps)
+				scope.download(ps)
+			},
 		}
 	</script>
 </head>
@@ -188,6 +368,8 @@ A->User: Done'
 				<textarea ng:model="definition"></textarea>
 				<input type="checkbox" ng:model="wantHandDraw"/> Make it looks like a hand drawn diagram<br/>
 				<button type="button" ng:click="draw()">Draw</button>
+				<br>
+				<button type="button" ng:click="print()">Download diagram as PostScript</button>
 			</td>
 			<td>
 				<svg version="1.1" ng:bind-attr="{viewBox:'{{-margin}} {{-margin}} {{width+2*margin}} {{height+2*margin}}'}">
@@ -208,7 +390,7 @@ A->User: Done'
 						<g ng:repeat="arrow in arrows" stroke-width="2"
 							transform="translate({{arrow.x}}, {{arrow.y}})">
 							<rect ng:bind-attr="{x:'{{Math.min(3, arrow.length*arrow.direction+3)}}', y: '-16', width: '{{Math.abs((arrow.length-6)*arrow.direction)}}', height: '19'}"
-								fill="white" stroke-width="0"/>
+								fill="white" stroke-width="0" stroke="white"/>
 							<polyline ng:bind-attr="{points:'{{byHand(0,0,arrow.length*arrow.direction,0)}}'}" fill="none"/>
 							<polyline ng:bind-attr="{points:'{{byHand((arrow.length-11)*arrow.direction, -10*arrow.direction, (arrow.length-1)*arrow.direction, 0)+\' \'+byHand((arrow.length-1)*arrow.direction, 0, (arrow.length-11)*arrow.direction, 10*arrow.direction)}}'}" fill="none"/>
 							<text ng:bind="arrow.text" ng:bind-attr="{x:'{{arrow.length*arrow.direction/2}}'}" y="-8"
