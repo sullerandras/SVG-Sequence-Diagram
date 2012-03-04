@@ -115,22 +115,23 @@ A->User: Done'
 						scope.height += scope.note_height
 					}
 				}
-				//add height for margin and bottom user boxes
+				//add height for margin and height for bottom user boxes
 				scope.height += scope.margin + scope.user_height
-				for (var i in scope.users) {
-					var user = scope.users[i]
-					scope.users.push({
-						x: user.x,
-						y: scope.height - scope.user_height,
-						name: user.name
-					})
-				}
 				//add vertical lines
 				for (var i in scope.users) {
 					var user = scope.users[i]
 					scope.lines.push({
 						x: user.x + scope.user_width / 2, y: scope.user_height,
 				 		dx: 0, dy: scope.height - 2 * scope.user_height
+					})
+				}
+				//add bottom user boxes
+				for (var i in scope.users) {
+					var user = scope.users[i]
+					scope.users.push({
+						x: user.x,
+						y: scope.height - scope.user_height,
+						name: user.name
 					})
 				}
 				// console.log(scope.users, scope.lines, scope.arrows)
@@ -210,7 +211,65 @@ A->User: Done'
 '+(rotate ? page.width+' 0 translate 90 rotate' : '')+'\n\
 '+scope.margin+' '+scope.margin+' translate\n\
 '+scale+' '+scale+' scale\n\
-/L { moveto rlineto } def\n\
+/toInt {\n\
+  0\n\
+  {\n\
+    exch\n\
+    dup 0 le {pop exit} if\n\
+    -1 add\n\
+    exch\n\
+    1 add\n\
+  } loop\n\
+} def\n\
+/SEED 123 def\n\
+/MOD {\n\
+  % a mod b == a - floor(a / b) * b\n\
+  2 copy div floor mul neg add\n\
+} def\n\
+/RND { % returns a float number between -x and x\n\
+  /SEED SEED 13 mul 1 add 256 mod def\n\
+  neg dup neg\n\
+  %-x x\n\
+  SEED 256 div\n\
+  %-x x rnd\n\
+  mul 2 mul add\n\
+} def\n\
+/L {\n\
+  %dx dy x0 y0\n\
+  2 copy\n\
+  %dx dy x0 y0 x0 y0\n\
+  moveto\n\
+  %dx dy x0 y0\n\
+  4 2 roll\n\
+  %x0 y0 dx dy\n\
+  %compute how many segments we want to use\n\
+  2 copy add 10 div ceiling abs toInt\n\
+  %x0 y0 dx dy count\n\
+  3 1 roll\n\
+  %x0 y0 count dx dy\n\
+  1 index 3 index div\n\
+  %x0 y0 count dx dy stepx\n\
+  1 index 4 index div\n\
+  %x0 y0 count dx dy stepx stepy\n\
+  6 index 6 index\n\
+  %x0 y0 count dx dy stepx stepy x y\n\
+  7 -1 roll\n\
+  %x0 y0 dx dy stepx stepy x y count\n\
+  -1 add {\n\
+    2 index add %y += stepy\n\
+    exch\n\
+    3 index add %x += stepx\n\
+    exch\n\
+    2 copy 1 RND add exch 1 RND add exch lineto\n\
+  } repeat\n\
+  %add the last segment without any randomization\n\
+  2 index add\n\
+  exch\n\
+  3 index add\n\
+  exch\n\
+  lineto\n\
+  pop pop pop pop pop pop\n\
+} def\n\
 /ARROW { % text x y direction length\n\
   2 setlinewidth\n\
   1 setlinejoin\n\
@@ -350,7 +409,7 @@ A->User: Done'
 					var l = arrow.length
 					var d = arrow.direction
 					// ps += '% arrow '+arrow.x+', '+arrow.y+', length: '+l+', direction: '+d+'\n'
-					ps += '('+arrow.text+') '+arrow.x+' '+arrow.y+' '+d+' '+l+' ARROW\n'
+					ps += '('+arrow.text+') '+arrow.x+' '+(scope.height-arrow.y)+' '+d+' '+l+' ARROW\n'
 				}
 				for (var i in scope.notes) {
 					var note = scope.notes[i]
