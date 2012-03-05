@@ -197,14 +197,14 @@ A->User: Done'
 			print: function(){
 				var scope = this
 				var page = scope.paperSizes[scope.pageSize]
-				var sw = page.width / (scope.width + 2 * scope.margin)
-				var sh = page.height / (scope.height + 2 * scope.margin)
+				var sw = (page.width - 2 * scope.margin) / scope.width
+				var sh = (page.height - 2 * scope.margin) / scope.height
 				var rotate = false
 				var scale = Math.min(sw, sh)
 				if (sw < sh) {
 					rotate = true
-					sw = page.height / (scope.width + 2 * scope.margin)
-					sh = page.width / (scope.height + 2 * scope.margin)
+					sw = (page.height - 2 * scope.margin) / scope.width
+					sh = (page.width - 2 * scope.margin) / scope.height
 					scale = Math.min(sw, sh)
 				}
 				var ps = '%!PS\n\
