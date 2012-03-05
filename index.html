@@ -211,17 +211,12 @@ A->User: Done'
 '+(rotate ? page.width+' 0 translate 90 rotate' : '')+'\n\
 '+scope.margin+' '+scope.margin+' translate\n\
 '+scale+' '+scale+' scale\n\
-/toInt {\n\
-  0\n\
-  {\n\
-    exch\n\
-    dup 0 le {pop exit} if\n\
-    -1 add\n\
-    exch\n\
-    1 add\n\
-  } loop\n\
-} def\n\
-/SEED 123 def\n\
+/UW '+scope.user_width+' def %user_width\n\
+/UH '+scope.user_height+' def %user_height\n\
+/NW '+scope.note_width+' def %note_width\n\
+/NH '+scope.note_height+' def %note_height\n\
+/wantHandDraw '+(scope.wantHandDraw ? 1 : 0)+' def\n\
+/SEED 120 def\n\
 /MOD {\n\
   % a mod b == a - floor(a / b) * b\n\
   2 copy div floor mul neg add\n\
@@ -234,61 +229,56 @@ A->User: Done'
   %-x x rnd\n\
   mul 2 mul add\n\
 } def\n\
-/L {\n\
-  %dx dy x0 y0\n\
-  2 copy\n\
-  %dx dy x0 y0 x0 y0\n\
-  moveto\n\
-  %dx dy x0 y0\n\
-  4 2 roll\n\
-  %x0 y0 dx dy\n\
-  %compute how many segments we want to use\n\
-  2 copy add 10 div ceiling abs toInt\n\
-  %x0 y0 dx dy count\n\
+/L {%dx dy x0 y0\n\
+  /SEED 120 def\n\
+  moveto LL\n\
+} def\n\
+/LL {\n\
+  %dx dy\n\
+  matrix currentmatrix %saves current transformation matrix\n\
   3 1 roll\n\
-  %x0 y0 count dx dy\n\
-  1 index 3 index div\n\
-  %x0 y0 count dx dy stepx\n\
-  1 index 4 index div\n\
-  %x0 y0 count dx dy stepx stepy\n\
-  6 index 6 index\n\
-  %x0 y0 count dx dy stepx stepy x y\n\
+  %CTM dx dy\n\
+  currentpoint translate\n\
+  %compute how many segments we want to use\n\
+  2 copy abs exch abs add 10 div ceiling cvi\n\
+  %CTM dx dy count\n\
+  3 1 roll\n\
+  %CTM count dx dy\n\
+  1 index 3 index div  1 index 4 index div\n\
+  %CTM count dx dy stepx stepy\n\
+  0 0\n\
+  %CTM count dx dy stepx stepy x y\n\
   7 -1 roll\n\
-  %x0 y0 dx dy stepx stepy x y count\n\
+  %CTM dx dy stepx stepy x y count\n\
   -1 add {\n\
-    2 index add %y += stepy\n\
-    exch\n\
-    3 index add %x += stepx\n\
-    exch\n\
+    2 index add  exch %y += stepy\n\
+    3 index add  exch %x += stepx\n\
     2 copy 1 RND add exch 1 RND add exch lineto\n\
   } repeat\n\
   %add the last segment without any randomization\n\
-  2 index add\n\
-  exch\n\
-  3 index add\n\
-  exch\n\
+  2 index add  exch\n\
+  3 index add  exch\n\
   lineto\n\
-  pop pop pop pop pop pop\n\
+  pop pop pop pop\n\
+  setmatrix %restore CTM\n\
 } def\n\
+0 wantHandDraw eq {\n\
+  /LL {rlineto} def\n\
+} if\n\
 /ARROW { % text x y direction length\n\
-  2 setlinewidth\n\
-  1 setlinejoin\n\
-  1 setlinecap\n\
-  /Times-Roman findfont\n\
-  15 scalefont\n\
-  setfont\n\
+  /Times-Roman findfont 15 scalefont setfont\n\
+  2 setlinewidth 1 setlinejoin 1 setlinecap\n\
   newpath\n\
   % text x y direction length\n\
-  2 copy\n\
-  % text x y direction length direction length\n\
-  mul 0\n\
-  % text x y direction length rlen 0\n\
+  2 copy mul 0\n\
+  % text x y direction length dx 0\n\
   5 index 5 index L\n\
   % text x y direction length\n\
+  %draw the arrow head\n\
   1 index\n\
   dup -10 mul -10 rmoveto\n\
-  dup 10 mul 10 rlineto\n\
-  -10 mul 10 rlineto\n\
+  dup 10 mul 10 LL\n\
+  -10 mul 10 LL\n\
   stroke\n\
   % text x y direction length\n\
   % fill the background of the text with white\n\
@@ -316,79 +306,56 @@ A->User: Done'
   show\n\
   stroke\n\
 } def\n\
-/USER {\n\
-  2 setlinewidth\n\
-  /Times-Roman findfont\n\
-  15 scalefont\n\
-  setfont\n\
+/RECT {\n\
+  %x y width height\n\
+  1 index 0  5 index 5 index  L %line: width 0 x y\n\
+  0 1 index  LL %rlineto: 0 height\n\
+  1 index neg 0  LL %rlineto: -width 0\n\
+  0 1 index neg  LL %rlineto: 0 -height\n\
+  pop pop pop pop\n\
+} def\n\
+/FILLRECT {\n\
+  %fillgray bordergray x y width height\n\
   % draw the gray background\n\
-  newpath\n\
-  2 copy\n\
-  moveto\n\
-  '+scope.user_width+' 0 rlineto\n\
-  0 '+scope.user_height+' neg rlineto\n\
-  '+scope.user_width+' neg 0 rlineto\n\
-  closepath\n\
-  0.84375 setgray\n\
+  newpath 4 copy RECT closepath\n\
+  5 index setgray\n\
   fill\n\
   % draw the border of the box\n\
-  newpath\n\
-  2 copy\n\
-  moveto\n\
-  '+scope.user_width+' 0 rlineto\n\
-  0 '+scope.user_height+' neg rlineto\n\
-  '+scope.user_width+' neg 0 rlineto\n\
-  closepath\n\
-  0 setgray\n\
-  stroke\n\
+  %fillgray bordergray x y width height\n\
+  newpath RECT closepath\n\
+  setgray stroke pop\n\
+} def\n\
+/USER { %name x y\n\
+  /Times-Roman findfont 15 scalefont setfont\n\
+  2 setlinewidth\n\
+  0.84375 0  3 index 3 index  UW UH neg FILLRECT\n\
   % draw the text in the center of the box\n\
   newpath\n\
   moveto\n\
-  '+scope.user_width+' 2 div '+scope.user_height+' neg 2 div rmoveto % center of the box\n\
+  UW 2 div UH neg 2 div rmoveto % center of the box\n\
   0 -5 rmoveto % lower the text a little bit, so it will be in the center of the box visually\n\
   0 setgray\n\
   dup stringwidth pop 2 div neg 0 rmoveto\n\
   show\n\
   stroke\n\
 } def\n\
-/LINE {\n\
+/LINE { %x y dx dy\n\
   2 setlinewidth\n\
   1 setlinejoin\n\
   1 setlinecap\n\
   newpath\n\
-  4 2 roll\n\
-  L\n\
+  4 2 roll L\n\
   stroke\n\
 } def\n\
-/NOTE {\n\
-  /Times-Roman findfont\n\
-  10 scalefont\n\
-  setfont\n\
+/NOTE { %text x y\n\
+  /Times-Roman findfont 10 scalefont setfont\n\
   1 setlinewidth\n\
-  % draw the white background\n\
-  newpath\n\
-  2 copy\n\
-  moveto\n\
-  '+scope.note_width+' 0 rlineto\n\
-  0 '+scope.note_height+' neg rlineto\n\
-  '+scope.note_width+' neg 0 rlineto\n\
-  closepath\n\
-  1 setgray\n\
-  fill\n\
-  % draw the border of the box\n\
-  newpath\n\
-  2 copy\n\
-  moveto\n\
-  '+scope.note_width+' 0 rlineto\n\
-  0 '+scope.note_height+' neg rlineto\n\
-  '+scope.note_width+' neg 0 rlineto\n\
-  closepath\n\
-  0 setgray\n\
-  stroke\n\
+  % draw the filled rect\n\
+  1 0  3 index 3 index  NW NH neg FILLRECT\n\
   % draw the text in the center of the box\n\
   newpath\n\
   moveto\n\
-  '+scope.note_width+' 2 div '+scope.note_height+' neg 2 div rmoveto % center of the box\n\
+  NW 2 div NH neg 2 div rmoveto % center of the box\n\
   0 -3 rmoveto % lower the text a little bit, so it will be in the center of the box visually\n\
   0 setgray\n\
   dup stringwidth pop 2 div neg 0 rmoveto\n\
