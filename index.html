@@ -32,6 +32,15 @@
 			scope.arrows = []
 			scope.notes = []
 			scope.wantHandDraw = true
+			scope.paperSizes = {
+				A0: {width: 2384, height: 3370},
+				A1: {width: 1684, height: 2384},
+				A2: {width: 1191, height: 1684},
+				A3:{width:  842, height: 1191},
+				A4:{width:  595, height: 842},
+			}
+			scope.pageSizes = Object.keys(scope.paperSizes)
+			scope.pageSize = 'A4'
 			scope.definition = 'participant: Alice as A\n\
 participant: B\n\
 \n\
@@ -187,15 +196,7 @@ A->User: Done'
 			},
 			print: function(){
 				var scope = this
-				var pageSizes = {
-					A0: {width: 2384, height: 3370},
-					A1: {width: 1684, height: 2384},
-					A2: {width: 1191, height: 1684},
-					A3:{width:  842, height: 1191},
-					A4:{width:  595, height: 842},
-				}
-				var pageSize = 'A4'
-				var page = pageSizes[pageSize]
+				var page = scope.paperSizes[scope.pageSize]
 				var sw = page.width / (scope.width + 2 * scope.margin)
 				var sh = page.height / (scope.height + 2 * scope.margin)
 				var rotate = false
@@ -207,7 +208,7 @@ A->User: Done'
 					scale = Math.min(sw, sh)
 				}
 				var ps = '%!PS\n\
-/PageSize '+pageSize+'\n\
+/PageSize '+scope.pageSize+'\n\
 '+(rotate ? page.width+' 0 translate 90 rotate' : '')+'\n\
 '+scope.margin+' '+scope.margin+' translate\n\
 '+scale+' '+scale+' scale\n\
@@ -398,7 +399,8 @@ A->User: Done'
 				<input type="checkbox" ng:model="wantHandDraw"/> Make it looks like a hand drawn diagram<br/>
 				<button type="button" ng:click="draw()">Draw</button>
 				<br>
-				<button type="button" ng:click="print()">Download diagram as PostScript</button>
+				Download diagram as <select ng:options="s for s in pageSizes" ng:model="pageSize"></select> PostScript.
+				<button type="button" ng:click="print()">Download</button>
 			</td>
 			<td>
 				<svg version="1.1" ng:bind-attr="{viewBox:'{{-margin}} {{-margin}} {{width+2*margin}} {{height+2*margin}}'}">
