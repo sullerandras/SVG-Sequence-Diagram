@@ -45,9 +45,9 @@
 participant: B\n\
 \n\
 User->A: DoWork\n\
-A->B: <<createRequest>>\n\
+A-->B: <<createRequest>>\n\
 note right of B: what should I do?\n\
-B->C: DoWork\n\
+B-->C: DoWork\n\
 note over C: processing...\n\
 C->B: WorkDone\n\
 note left of B: hmm.. it was fast\n\
@@ -85,10 +85,11 @@ A->User: Done'
 				var lines = scope.definition.split('\n')
 				for (var i in lines) {
 					var line = lines[i].trim()
-					if (/^(.*)->(.*):(.*)$/.exec(line) != null) {
+					if (/^([^-]*(-+[^-]+)*)(-->|->)(.*):(.*)$/.exec(line) != null) {
 						var from = RegExp.$1.trim()
-						var to = RegExp.$2.trim()
-						var text = RegExp.$3.trim()
+						var arrow = RegExp.$3.trim()
+						var to = RegExp.$4.trim()
+						var text = RegExp.$5.trim()
 						// console.log(line+' => from: '+from+', to: '+to+', text: '+text)
 						var ufrom = scope.getUser(from)
 						var uto = scope.getUser(to)
@@ -97,7 +98,8 @@ A->User: Done'
 							y: scope.height + scope.user_height / 2,
 							length: Math.abs(ufrom.x - uto.x),
 							direction: uto.x > ufrom.x ? 1 : -1,
-							text: text
+							text: text,
+							dashed: (arrow == '-->')
 						})
 						scope.height += 50
 					} else if (/^participant:(.*) as (.*)$/.exec(line) != null) {
@@ -195,6 +197,7 @@ A->User: Done'
 					].join(" ")
 			},
 			print: function(){
+				// PostScript reference: http://www.ugrad.math.ubc.ca/Flat/
 				var scope = this
 				var page = scope.paperSizes[scope.pageSize]
 				var sw = (page.width - 2 * scope.margin) / scope.width
@@ -275,6 +278,8 @@ A->User: Done'
   % text x y direction length dx 0\n\
   5 index 5 index L\n\
   % text x y direction length\n\
+  currentpoint stroke moveto\n\
+  [] 0 setdash\n\
   %draw the arrow head\n\
   1 index\n\
   dup -10 mul -10 rmoveto\n\
@@ -306,6 +311,10 @@ A->User: Done'
   dup stringwidth pop 2 div neg 0 rmoveto\n\
   show\n\
   stroke\n\
+} def\n\
+/DASHEDARROW { % text x y direction length\n\
+  [9 4] 0 setdash\n\
+  ARROW\n\
 } def\n\
 /RECT {\n\
   %x y width height\n\
@@ -374,10 +383,8 @@ A->User: Done'
 				}
 				for (var i in scope.arrows) {
 					var arrow = scope.arrows[i]
-					var l = arrow.length
-					var d = arrow.direction
-					// ps += '% arrow '+arrow.x+', '+arrow.y+', length: '+l+', direction: '+d+'\n'
-					ps += '('+arrow.text+') '+arrow.x+' '+(scope.height-arrow.y)+' '+d+' '+l+' ARROW\n'
+					ps += '('+arrow.text+') '+arrow.x+' '+(scope.height-arrow.y)+' '+
+						arrow.direction+' '+arrow.length+' '+(arrow.dashed ? 'DASHED' : '')+'ARROW\n'
 				}
 				for (var i in scope.notes) {
 					var note = scope.notes[i]
@@ -422,7 +429,7 @@ A->User: Done'
 							transform="translate({{arrow.x}}, {{arrow.y}})">
 							<rect ng:bind-attr="{x:'{{Math.min(3, arrow.length*arrow.direction+3)}}', y: '-16', width: '{{Math.abs((arrow.length-6)*arrow.direction)}}', height: '19'}"
 								fill="white" stroke-width="0" stroke="white"/>
-							<polyline ng:bind-attr="{points:'{{byHand(0,0,arrow.length*arrow.direction,0)}}'}" fill="none"/>
+							<polyline ng:bind-attr="{points:'{{byHand(0,0,arrow.length*arrow.direction,0)}}'}" fill="none" style="stroke-dasharray: {{arrow.dashed && '9, 4' || '0'}}"/>
 							<polyline ng:bind-attr="{points:'{{byHand((arrow.length-11)*arrow.direction, -10*arrow.direction, (arrow.length-1)*arrow.direction, 0)+\' \'+byHand((arrow.length-1)*arrow.direction, 0, (arrow.length-11)*arrow.direction, 10*arrow.direction)}}'}" fill="none"/>
 							<text ng:bind="arrow.text" ng:bind-attr="{x:'{{arrow.length*arrow.direction/2}}'}" y="-8"
 								stroke-width="0" dominant-baseline="middle" font-size="14"></text>
