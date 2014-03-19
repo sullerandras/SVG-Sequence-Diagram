@@ -68,6 +68,7 @@ A->User: Done'
 				return data
 			}
 			var rndseed = 123
+			scope.Math = Math
 			scope.rnd = function() {
 				rndseed = ((rndseed * 134775813) + 1) % 4294967296
 				return rndseed / 4294967296
@@ -390,7 +391,7 @@ A->User: Done'
 					ps += '('+note.text+') '+note.x+' '+(scope.height-note.y)+' NOTE\n'
 				}
 				ps += 'showpage\n'
-				console.log(ps)
+				// console.log(ps)
 				scope.download(ps)
 			}
 		}
@@ -402,7 +403,7 @@ A->User: Done'
 			<td class="definition">
 				Enter your definition:<br/>
 				<textarea ng-model="definition"></textarea>
-				<input type="checkbox" ng-model="wantHandDraw"/> Make it looks like a hand drawn diagram<br/>
+				<label><input type="checkbox" ng-model="wantHandDraw"/> Make it look like a hand drawn diagram</label><br/>
 				<button type="button" ng-click="draw()">Draw</button>
 				<br>
 				Download diagram as <select ng-options="s for s in pageSizes" ng-model="pageSize"></select> PostScript.
@@ -428,7 +429,7 @@ A->User: Done'
 							transform="translate({{arrow.x}}, {{arrow.y}})">
 							<rect ng-attr-x="{{Math.min(3, arrow.length*arrow.direction+3)}}" y="-16" ng-attr-width="{{Math.abs((arrow.length-6)*arrow.direction)}}" height="19"
 								fill="white" stroke-width="0" stroke="white"/>
-							<polyline ng-attr-points="{{byHand(0,0,arrow.length*arrow.direction,0)}}" fill="none" style="stroke-dasharray: {{arrow.dashed && '9, 4' || '0'}}"/>
+							<polyline ng-attr-points="{{byHand(0,0,arrow.length*arrow.direction,0)}}" fill="none" style="stroke-dasharray: {{arrow.dashed &amp;&amp; '9, 4' || '0'}}"/>
 							<polyline ng-attr-points="{{byHand((arrow.length-11)*arrow.direction, -10*arrow.direction, (arrow.length-1)*arrow.direction, 0)+&quot; &quot;+byHand((arrow.length-1)*arrow.direction, 0, (arrow.length-11)*arrow.direction, 10*arrow.direction)}}" fill="none"/>
 							<text ng-bind="arrow.text" ng-attr-x="{{arrow.length*arrow.direction/2}}" y="-8"
 								stroke-width="0" dominant-baseline="middle" font-size="14"></text>
