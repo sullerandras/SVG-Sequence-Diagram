@@ -1,25 +1,32 @@
 <!doctype html>
-<html xmlns:ng="http://angularjs.org" ng:app="MyApp">
+<html ng-app="MyApp">
 <head>
 	<meta charset="utf-8">
 	<title>Sequence flow</title>
-	<script src="http://code.angularjs.org/angular-0.10.6.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.10/angular.min.js"></script>
 	<style>
+		ng-cloak { display: none; }
 		html, body { height: 100%; }
 		* {padding: 0; margin: 0;}
 		table { width: 100%; height: 100%; }
 		td { width: 50%; height: 100%; }
 		td.definition { vertical-align: top;}
 		textarea { width: 100%; height: 50%; }
-		svg { width: 100%; height: 100%; border: 1px solid black; }
+		svg { width: 100%; height: 100%; border: 1px solid black; box-sizing: border-box; }
 	</style>
 	<script>
 		var app = angular.module('MyApp', [])
-		AppController.$inject = ['$http', '$location', '$window']
-		function AppController($http, $location, $window){
-			var scope = this
-			scope.$http = $http
-			scope.$window = $window
+		app.directive('vbox', function() {
+			return {
+				link: function(scope, element, attrs) {
+					attrs.$observe('vbox', function(value) {
+						element.attr('viewBox', value);
+					})
+				}
+			};
+		});
+		AppController.$inject = ['$scope', '$window']
+		function AppController(scope, $window){
 			scope.margin = 10
 			scope.user_width = 100
 			scope.user_height = 50
@@ -31,7 +38,7 @@
 			scope.users = []
 			scope.arrows = []
 			scope.notes = []
-			scope.wantHandDraw = true
+			scope.wantHandDraw = false
 			scope.paperSizes = {
 				A0: {width: 2384, height: 3370},
 				A1: {width: 1684, height: 2384},
@@ -56,26 +63,21 @@ A->User: Done'
 			scope.$watch('definition', function(){
 				scope.draw()
 			})
-		}
-		AppController.prototype = {
-			log: function(data){
+			scope.log = function(data){
 				console && console.log && console.log(data)
 				return data
-			},
-			Math: Math,
-			rndseed: 123,
-			rnd: function() {
-			  this.rndseed = ((this.rndseed * 134775813) + 1) % 4294967296
-			  return this.rndseed / 4294967296
-			},
-			download: function(text) {
-				var scope = this
-				scope.$window.location.href =
+			}
+			var rndseed = 123
+			scope.rnd = function() {
+				rndseed = ((rndseed * 134775813) + 1) % 4294967296
+				return rndseed / 4294967296
+			}
+			scope.download = function(text) {
+				$window.location.href =
 					'data:application/x-download;charset=utf-8,' +
 					encodeURIComponent(text)
-			},
-			draw: function(){
-				var scope = this
+			}
+			scope.draw = function(){
 				scope.height = scope.user_height + scope.margin
 				scope.width = -100
 				scope.users = []
@@ -133,7 +135,7 @@ A->User: Done'
 					var user = scope.users[i]
 					scope.lines.push({
 						x: user.x + scope.user_width / 2, y: scope.user_height,
-				 		dx: 0, dy: scope.height - 2 * scope.user_height
+						dx: 0, dy: scope.height - 2 * scope.user_height
 					})
 				}
 				//add bottom user boxes
@@ -146,9 +148,8 @@ A->User: Done'
 					})
 				}
 				// console.log(scope.users, scope.lines, scope.arrows)
-			},
-			getUser: function(name, alias){
-				var scope = this
+			}
+			scope.getUser = function(name, alias){
 				for (var i = 0; i < scope.users.length; i++) {
 					var user = scope.users[i]
 					if (user.name == name || user.alias == name) {
@@ -164,12 +165,11 @@ A->User: Done'
 				}
 				scope.users.push(user)
 				return user
-			},
-			byHand: function(x1, y1, x2, y2) {
-				var scope = this
+			}
+			scope.byHand = function(x1, y1, x2, y2) {
 				var points = x1+','+y1
 				if (scope.wantHandDraw) {
-					scope.rndseed = 123
+					rndseed = 123
 					//number of segments (one segment for every 10 pixels)
 					var seg = Math.ceil(Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))/10)
 					var inaccuracy = 2
@@ -187,18 +187,17 @@ A->User: Done'
 					}
 				}
 				return points+' '+x2+','+y2
-			},
-			rectByHand: function(x1, y1, x2, y2) {
+			}
+			scope.rectByHand = function(x1, y1, x2, y2) {
 				return [
-					this.byHand(x1,y1, x2,y1),
-					this.byHand(x2,y1, x2,y2),
-					this.byHand(x2,y2, x1, y2),
-					this.byHand(x1,y2, x1, y1)
+					scope.byHand(x1,y1, x2,y1),
+					scope.byHand(x2,y1, x2,y2),
+					scope.byHand(x2,y2, x1, y2),
+					scope.byHand(x1,y2, x1, y1)
 					].join(" ")
-			},
-			print: function(){
+			}
+			scope.print = function(){
 				// PostScript reference: http://www.ugrad.math.ubc.ca/Flat/
-				var scope = this
 				var page = scope.paperSizes[scope.pageSize]
 				var sw = (page.width - 2 * scope.margin) / scope.width
 				var sh = (page.height - 2 * scope.margin) / scope.height
@@ -393,52 +392,52 @@ A->User: Done'
 				ps += 'showpage\n'
 				console.log(ps)
 				scope.download(ps)
-			},
+			}
 		}
 	</script>
 </head>
-<body ng:controller="AppController">
+<body ng-controller="AppController">
 	<table class="page">
 		<tr>
 			<td class="definition">
 				Enter your definition:<br/>
-				<textarea ng:model="definition"></textarea>
-				<input type="checkbox" ng:model="wantHandDraw"/> Make it looks like a hand drawn diagram<br/>
-				<button type="button" ng:click="draw()">Draw</button>
+				<textarea ng-model="definition"></textarea>
+				<input type="checkbox" ng-model="wantHandDraw"/> Make it looks like a hand drawn diagram<br/>
+				<button type="button" ng-click="draw()">Draw</button>
 				<br>
-				Download diagram as <select ng:options="s for s in pageSizes" ng:model="pageSize"></select> PostScript.
-				<button type="button" ng:click="print()">Download</button>
+				Download diagram as <select ng-options="s for s in pageSizes" ng-model="pageSize"></select> PostScript.
+				<button type="button" ng-click="print()">Download</button>
 			</td>
-			<td>
-				<svg version="1.1" ng:bind-attr="{viewBox:'{{-margin}} {{-margin}} {{width+2*margin}} {{height+2*margin}}'}">
+			<td ng-cloak>
+				<svg version="1.1" vbox="{{-margin}} {{-margin}} {{width+2*margin}} {{height+2*margin}}">
 					<desc>Hand drawn sequence diagram</desc>
 					<g stroke="black" font-family="Arial" text-anchor="middle">
 						<!-- draw user boxes and the vertical lines -->
-						<g ng:repeat="user in users" transform="translate({{user.x}}, {{user.y}})"
+						<g ng-repeat="user in users" transform="translate({{user.x}}, {{user.y}})"
 							font-size="20">
-							<polyline ng:bind-attr="{points:'{{rectByHand(0,0,100,50)}}'}" fill="#D8D8D8" stroke-width="2" />
-							<text ng:bind="user.name" x="50" y="25" stroke-width="0"
+							<polyline ng-attr-points="{{rectByHand(0,0,100,50)}}" fill="#D8D8D8" stroke-width="2" />
+							<text ng-bind="user.name" x="50" y="25" stroke-width="0"
 								dominant-baseline="middle"></text>
 						</g>
-						<g ng:repeat="line in lines" transform="translate({{line.x}}, {{line.y}})"
+						<g ng-repeat="line in lines" transform="translate({{line.x}}, {{line.y}})"
 							stroke-width="2">
-							<polyline ng:bind-attr="{points:'{{byHand(0,0,line.dx,line.dy)}}'}" fill="none"/>
+							<polyline ng-attr-points="{{byHand(0,0,line.dx,line.dy)}}" fill="none"/>
 						</g>
 						<!-- draw arrows between users -->
-						<g ng:repeat="arrow in arrows" stroke-width="2"
+						<g ng-repeat="arrow in arrows" stroke-width="2"
 							transform="translate({{arrow.x}}, {{arrow.y}})">
-							<rect ng:bind-attr="{x:'{{Math.min(3, arrow.length*arrow.direction+3)}}', y: '-16', width: '{{Math.abs((arrow.length-6)*arrow.direction)}}', height: '19'}"
+							<rect ng-attr-x="{{Math.min(3, arrow.length*arrow.direction+3)}}" y="-16" ng-attr-width="{{Math.abs((arrow.length-6)*arrow.direction)}}" height="19"
 								fill="white" stroke-width="0" stroke="white"/>
-							<polyline ng:bind-attr="{points:'{{byHand(0,0,arrow.length*arrow.direction,0)}}'}" fill="none" style="stroke-dasharray: {{arrow.dashed && '9, 4' || '0'}}"/>
-							<polyline ng:bind-attr="{points:'{{byHand((arrow.length-11)*arrow.direction, -10*arrow.direction, (arrow.length-1)*arrow.direction, 0)+\' \'+byHand((arrow.length-1)*arrow.direction, 0, (arrow.length-11)*arrow.direction, 10*arrow.direction)}}'}" fill="none"/>
-							<text ng:bind="arrow.text" ng:bind-attr="{x:'{{arrow.length*arrow.direction/2}}'}" y="-8"
+							<polyline ng-attr-points="{{byHand(0,0,arrow.length*arrow.direction,0)}}" fill="none" style="stroke-dasharray: {{arrow.dashed && '9, 4' || '0'}}"/>
+							<polyline ng-attr-points="{{byHand((arrow.length-11)*arrow.direction, -10*arrow.direction, (arrow.length-1)*arrow.direction, 0)+&quot; &quot;+byHand((arrow.length-1)*arrow.direction, 0, (arrow.length-11)*arrow.direction, 10*arrow.direction)}}" fill="none"/>
+							<text ng-bind="arrow.text" ng-attr-x="{{arrow.length*arrow.direction/2}}" y="-8"
 								stroke-width="0" dominant-baseline="middle" font-size="14"></text>
 						</g>
 						<!-- draw note boxes -->
-						<g ng:repeat="note in notes" stroke-width="1"
+						<g ng-repeat="note in notes" stroke-width="1"
 							transform="translate({{note.x}}, {{note.y}})">
-							<polyline ng:bind-attr="{points:'{{rectByHand(0,0,note_width,note_height)}}'}" fill="white"/>
-							<text ng:bind="note.text" x="{{note_width/2}}" y="{{note_height/2}}"
+							<polyline ng-attr-points="{{rectByHand(0,0,note_width,note_height)}}" fill="white"/>
+							<text ng-bind="note.text" ng-attr-x="{{note_width/2}}" ng-attr-y="{{note_height/2}}"
 								stroke-width="0" dominant-baseline="middle" font-size="10"></text>
 						</g>
 					</g>
