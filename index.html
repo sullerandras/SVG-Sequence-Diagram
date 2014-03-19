@@ -1,74 +1,74 @@
 <!doctype html>
 <html>
 <head>
-	<title>Sequence flow</title>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.10/angular.min.js"></script>
-	<style>
-		ng-cloak { display: none; }
-		html, body { height: 100%; }
-		* {padding: 0; margin: 0;}
-		table { width: 100%; height: 100%; }
-		td { width: 50%; height: 100%; }
-		td.definition { vertical-align: top;}
-		textarea { width: 100%; height: 50%; }
-		svg { width: 100%; height: 100%; border: 1px solid black; box-sizing: border-box; }
-	</style>
-	<script type="text/javascript">
-		angular.module('myApp', [])
-	</script>
-	<script type="text/javascript" src="directives.js"></script>
-	<script type="text/javascript" src="services.js"></script>
-	<script type="text/javascript" src="controllers.js"></script>
+  <title>Sequence flow</title>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.10/angular.min.js"></script>
+  <style>
+    ng-cloak { display: none; }
+    html, body { height: 100%; }
+    * {padding: 0; margin: 0;}
+    table { width: 100%; height: 100%; }
+    td { width: 50%; height: 100%; }
+    td.definition { vertical-align: top;}
+    textarea { width: 100%; height: 50%; }
+    svg { width: 100%; height: 100%; border: 1px solid black; box-sizing: border-box; }
+  </style>
+  <script type="text/javascript">
+    angular.module('myApp', [])
+  </script>
+  <script type="text/javascript" src="directives.js"></script>
+  <script type="text/javascript" src="services.js"></script>
+  <script type="text/javascript" src="controllers.js"></script>
 </head>
 <body ng-controller="AppController">
-	<table class="page">
-		<tr>
-			<td class="definition">
-				Enter your definition:<br/>
-				<textarea ng-model="definition"></textarea>
-				<label><input type="checkbox" ng-model="wantHandDraw"/> Make it look like a hand drawn diagram</label><br/>
-				<button type="button" ng-click="draw()">Draw</button>
-				<br>
-				Download diagram as <select ng-options="s for s in pageSizes" ng-model="pageSize"></select> PostScript.
-				<button type="button" ng-click="print()">Download</button>
-			</td>
-			<td ng-cloak>
-				<svg version="1.1" vbox="{{-margin}} {{-margin}} {{width+2*margin}} {{height+2*margin}}">
-					<desc>Hand drawn sequence diagram</desc>
-					<g stroke="black" font-family="Arial" text-anchor="middle">
-						<!-- draw user boxes and the vertical lines -->
-						<g ng-repeat="user in users" transform="translate({{user.x}}, {{user.y}})"
-							font-size="20">
-							<polyline ng-attr-points="{{rectByHand(0,0,100,50)}}" fill="#D8D8D8" stroke-width="2" />
-							<text ng-bind="user.name" x="50" y="25" stroke-width="0"
-								dominant-baseline="middle"></text>
-						</g>
-						<g ng-repeat="line in lines" transform="translate({{line.x}}, {{line.y}})"
-							stroke-width="2">
-							<polyline ng-attr-points="{{byHand(0,0,line.dx,line.dy)}}" fill="none"/>
-						</g>
-						<!-- draw arrows between users -->
-						<g ng-repeat="arrow in arrows" stroke-width="2"
-							transform="translate({{arrow.x}}, {{arrow.y}})">
-							<rect ng-attr-x="{{Math.min(3, arrow.length*arrow.direction+3)}}" y="-16" ng-attr-width="{{Math.abs((arrow.length-6)*arrow.direction)}}" height="19"
-								fill="white" stroke-width="0" stroke="white"/>
-							<polyline ng-attr-points="{{byHand(0,0,arrow.length*arrow.direction,0)}}" fill="none" style="stroke-dasharray: {{arrow.dashed &amp;&amp; '9, 4' || '0'}}"/>
-							<polyline ng-attr-points="{{byHand((arrow.length-11)*arrow.direction, -10*arrow.direction, (arrow.length-1)*arrow.direction, 0)+&quot; &quot;+byHand((arrow.length-1)*arrow.direction, 0, (arrow.length-11)*arrow.direction, 10*arrow.direction)}}" fill="none"/>
-							<text ng-bind="arrow.text" ng-attr-x="{{arrow.length*arrow.direction/2}}" y="-8"
-								stroke-width="0" dominant-baseline="middle" font-size="14"></text>
-						</g>
-						<!-- draw note boxes -->
-						<g ng-repeat="note in notes" stroke-width="1"
-							transform="translate({{note.x}}, {{note.y}})">
-							<polyline ng-attr-points="{{rectByHand(0,0,note_width,note_height)}}" fill="white"/>
-							<text ng-bind="note.text" ng-attr-x="{{note_width/2}}" ng-attr-y="{{note_height/2}}"
-								stroke-width="0" dominant-baseline="middle" font-size="10"></text>
-						</g>
-					</g>
-				</svg>
-			</td>
-		</tr>
-	</table>
+  <table class="page">
+    <tr>
+      <td class="definition">
+        Enter your definition:<br/>
+        <textarea ng-model="definition"></textarea>
+        <label><input type="checkbox" ng-model="wantHandDraw"/> Make it look like a hand drawn diagram</label><br/>
+        <button type="button" ng-click="draw()">Draw</button>
+        <br>
+        Download diagram as <select ng-options="s for s in pageSizes" ng-model="pageSize"></select> PostScript.
+        <button type="button" ng-click="print()">Download</button>
+      </td>
+      <td ng-cloak>
+        <svg version="1.1" vbox="{{-margin}} {{-margin}} {{width+2*margin}} {{height+2*margin}}">
+          <desc>Hand drawn sequence diagram</desc>
+          <g stroke="black" font-family="Arial" text-anchor="middle">
+            <!-- draw user boxes and the vertical lines -->
+            <g ng-repeat="user in users" transform="translate({{user.x}}, {{user.y}})"
+              font-size="20">
+              <polyline ng-attr-points="{{rectByHand(0,0,100,50)}}" fill="#D8D8D8" stroke-width="2" />
+              <text ng-bind="user.name" x="50" y="25" stroke-width="0"
+                dominant-baseline="middle"></text>
+            </g>
+            <g ng-repeat="line in lines" transform="translate({{line.x}}, {{line.y}})"
+              stroke-width="2">
+              <polyline ng-attr-points="{{byHand(0,0,line.dx,line.dy)}}" fill="none"/>
+            </g>
+            <!-- draw arrows between users -->
+            <g ng-repeat="arrow in arrows" stroke-width="2"
+              transform="translate({{arrow.x}}, {{arrow.y}})">
+              <rect ng-attr-x="{{Math.min(3, arrow.length*arrow.direction+3)}}" y="-16" ng-attr-width="{{Math.abs((arrow.length-6)*arrow.direction)}}" height="19"
+                fill="white" stroke-width="0" stroke="white"/>
+              <polyline ng-attr-points="{{byHand(0,0,arrow.length*arrow.direction,0)}}" fill="none" style="stroke-dasharray: {{arrow.dashed &amp;&amp; '9, 4' || '0'}}"/>
+              <polyline ng-attr-points="{{byHand((arrow.length-11)*arrow.direction, -10*arrow.direction, (arrow.length-1)*arrow.direction, 0)+&quot; &quot;+byHand((arrow.length-1)*arrow.direction, 0, (arrow.length-11)*arrow.direction, 10*arrow.direction)}}" fill="none"/>
+              <text ng-bind="arrow.text" ng-attr-x="{{arrow.length*arrow.direction/2}}" y="-8"
+                stroke-width="0" dominant-baseline="middle" font-size="14"></text>
+            </g>
+            <!-- draw note boxes -->
+            <g ng-repeat="note in notes" stroke-width="1"
+              transform="translate({{note.x}}, {{note.y}})">
+              <polyline ng-attr-points="{{rectByHand(0,0,note_width,note_height)}}" fill="white"/>
+              <text ng-bind="note.text" ng-attr-x="{{note_width/2}}" ng-attr-y="{{note_height/2}}"
+                stroke-width="0" dominant-baseline="middle" font-size="10"></text>
+            </g>
+          </g>
+        </svg>
+      </td>
+    </tr>
+  </table>
   <script type="text/javascript">
   angular.bootstrap(document, ['myApp'])
   </script>
