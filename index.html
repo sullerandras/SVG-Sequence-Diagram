@@ -25,7 +25,19 @@
 				}
 			};
 		});
-		app.controller('AppController', ['$scope', '$window', function(scope, $window){
+		app.service('rnd', function(){
+			var seed = 123
+			return {
+				reset: function(){
+					seed = 123
+				},
+				next: function(){
+					seed = ((seed * 134775813) + 1) % 4294967296
+					return seed / 4294967296
+				}
+			}
+		})
+		app.controller('AppController', ['$scope', '$window', 'rnd', function(scope, $window, rnd){
 			scope.margin = 10
 			scope.user_width = 100
 			scope.user_height = 50
@@ -66,12 +78,7 @@ A->User: Done'
 				console && console.log && console.log(data)
 				return data
 			}
-			var rndseed = 123
 			scope.Math = Math
-			scope.rnd = function() {
-				rndseed = ((rndseed * 134775813) + 1) % 4294967296
-				return rndseed / 4294967296
-			}
 			scope.download = function(text) {
 				$window.location.href =
 					'data:application/x-download;charset=utf-8,' +
@@ -169,12 +176,12 @@ A->User: Done'
 			scope.byHand = function(x1, y1, x2, y2) {
 				var points = x1+','+y1
 				if (scope.wantHandDraw) {
-					rndseed = 123
+					rnd.reset()
 					//number of segments (one segment for every 10 pixels)
 					var seg = Math.ceil(Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))/10)
 					var inaccuracy = 2
 					function mod(x){
-						return x + scope.rnd() * inaccuracy - inaccuracy / 2
+						return x + rnd.next() * inaccuracy - inaccuracy / 2
 					}
 					var x = x1
 					var y = y1
