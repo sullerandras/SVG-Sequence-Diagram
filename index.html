@@ -25,8 +25,7 @@
 				}
 			};
 		});
-		AppController.$inject = ['$scope', '$window']
-		function AppController(scope, $window){
+		app.controller('AppController', ['$scope', '$window', function(scope, $window){
 			scope.margin = 10
 			scope.user_width = 100
 			scope.user_height = 50
@@ -394,7 +393,7 @@ A->User: Done'
 				// console.log(ps)
 				scope.download(ps)
 			}
-		}
+		}])
 	</script>
 </head>
 <body ng-controller="AppController">
